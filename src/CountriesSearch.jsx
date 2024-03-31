@@ -1,17 +1,18 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { useEffect, useState, useRef } from 'react';
 
 
 const CountriesSearch = () => {
 
     const [countries, setCountries] = useState([]);
     const [search, setSearch] = useState('');
+    const [filteredCountries, setFilteredCountries] = useState([]);
 
     const getCountriesData = async () => {
         try {
             const response = await axios.get('https://restcountries.com/v3.1/all');
             setCountries(response.data);
+            setFilteredCountries(response.data);
         } catch (error) {
             console.error(error);
         }
@@ -20,6 +21,17 @@ const CountriesSearch = () => {
     useEffect(() => {
         getCountriesData();
     },[]);
+
+    
+    useEffect(() => {
+        const debounceTimer = setTimeout(() =>{
+            const filtered = countries.filter(country => country.name.common.toLowerCase().includes(search.toLowerCase()));
+            setFilteredCountries(filtered);
+        }, 1000);
+
+        return () => clearTimeout(debounceTimer);
+    },[search, countries]);
+        
 
     const cardStyle = {
         width: "200px",
@@ -48,19 +60,11 @@ const CountriesSearch = () => {
     };
 
 
-    let filteredCountries = countries.filter(country => country.name.common.toLowerCase().includes(search.toLowerCase()));
-
-       
-        
-
-
-    
-
   return (
     <div>
         <input type='text' placeholder='Search for countries...' style={{width: '40vw', height:"5vh", margin:"20px"}} onChange={(e) => setSearch(e.target.value)}/>
         <div style={containerStyle}>
-            {filteredCountries.map((item, idx) => {
+             {filteredCountries.map((item, idx) => {
                 return (
                     <div key={idx} style={cardStyle} className='countryCard'>
                         <img src={item.flags.png} alt={`Flag of ${item.name.common}`} style={imageStyle}  />
